@@ -1,0 +1,77 @@
+CREATE TABLE Employee (
+    emp_id        NUMBER PRIMARY KEY,           -- Employee ID, unique identifier
+    dept_id       NUMBER,                       -- Department ID the employee belongs to
+    emp_name      VARCHAR2(50),                 -- Name of the employee
+    doj           DATE,                         -- Date of joining
+    salary        NUMBER(10, 2),                -- Current salary of the employee
+    commission    NUMBER(5, 2) DEFAULT 0,       -- Commission percentage, default is 0
+    job_title     VARCHAR2(50)                  -- Job title of the employee
+);
+CREATE TABLE Salary_Increment (
+    emp_id        NUMBER,                       -- Employee ID, foreign key reference to Employee table
+    new_salary    NUMBER(10, 2),                -- New salary after increment
+    increment_date DATE DEFAULT SYSDATE,        -- Date of increment, default to current date
+    CONSTRAINT fk_emp_id FOREIGN KEY (emp_id) REFERENCES Employee(emp_id)
+);
+
+SET serveroutput on;
+DECLARE
+    v_emp_id            NUMBER := &emp_id;  -- Variable to hold the employee ID, taken as input from the user
+    v_dept_id           NUMBER;             -- Variable to store the department ID of the employee
+    v_emp_name          VARCHAR2(50);       -- Variable to store the name of the employee
+    v_doj               DATE;               -- Variable to store the Date of Joining (DoJ) of the employee
+    v_salary            NUMBER(10, 2);      -- Variable to store the current salary of the employee
+    v_experience        NUMBER(5);          -- Variable to store the calculated years of experience
+    v_increment_rate    NUMBER(5, 2);       -- Variable to store the percentage rate of increment
+    v_new_salary        NUMBER(10, 2);      -- Variable to store the calculated new salary after increment
+
+    -- Custom exception to handle case where the employee ID is not found in the Employee table
+    employee_not_found EXCEPTION;
+
+BEGIN
+    -- Retrieve employee details from the Employee table using the provided employee ID (emp_id)
+    -- If no record is found, NO_DATA_FOUND exception will be raised
+    SELECT dept_id, emp_name, doj, salary
+    INTO v_dept_id, v_emp_name, v_doj, v_salary
+    FROM Employee
+    WHERE emp_id = v_emp_id;
+
+    -- Calculate years of experience based on Date of Joining (DoJ)
+    -- MONTHS_BETWEEN returns the difference in months between current date and DoJ
+    -- Dividing by 12 and using TRUNC rounds down to the nearest whole number of years
+    v_experience := TRUNC(MONTHS_BETWEEN(SYSDATE, v_doj) / 12);
+
+    -- Determine the increment rate based on years of experience
+    -- If experience is more than 10 years, set increment rate to 20%
+    IF v_experience > 10 THEN
+        v_increment_rate := 0.20;
+    -- If experience is greater than 5 years but 10 years or less, set increment rate to 10%
+    ELSIF v_experience > 5 THEN
+        v_increment_rate := 0.10;
+    -- For 5 years or less, set increment rate to 5%
+    ELSE
+        v_increment_rate := 0.05;
+    END IF;
+
+    -- Calculate the new salary by applying the increment rate to the current salary
+    v_new_salary := v_salary * (1 + v_increment_rate);
+
+    -- Insert the calculated new salary into the Salary_Increment table along with the employee ID
+    INSERT INTO Salary_Increment (emp_id, new_salary)
+    VALUES (v_emp_id, v_new_salary);
+
+    -- Display the new salary for the employee using DBMS_OUTPUT
+    DBMS_OUTPUT.PUT_LINE('New salary for Employee ' || v_emp_id || ' is: ' || v_new_salary);
+
+-- Exception handling block to manage potential errors
+EXCEPTION
+    -- Handle case where the employee record is not found in the Employee table
+    WHEN NO_DATA_FOUND THEN
+        RAISE employee_not_found;  -- Raise a custom exception if no employee is found
+    -- Handle custom exception to display an error message
+    WHEN employee_not_found THEN
+        DBMS_OUTPUT.PUT_LINE('Employee with ID ' || v_emp_id || ' not found.');
+    -- Handle any other unexpected errors and display the error message
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('An unexpected error occurred: ' || SQLERRM);
+END;
