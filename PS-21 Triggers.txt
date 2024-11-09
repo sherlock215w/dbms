@@ -1,0 +1,54 @@
+-- Create Employee table
+CREATE TABLE Employee (
+    emp_id NUMBER PRIMARY KEY,
+    emp_name VARCHAR2(50),
+    salary NUMBER(10, 2),
+    designation VARCHAR2(30)
+);
+-- Create Salary_Backup table
+CREATE TABLE Salary_Backup (
+    emp_id NUMBER,
+    old_salary NUMBER(10, 2),
+    new_salary NUMBER(10, 2),
+    salary_difference NUMBER(10, 2),
+    FOREIGN KEY (emp_id) REFERENCES Employee(emp_id)
+);
+INSERT INTO Employee (emp_id, emp_name, salary, designation) VALUES (101, 'Alice Johnson', 60000, 'Manager');
+INSERT INTO Employee (emp_id, emp_name, salary, designation) VALUES (102, 'Bob Smith', 80000, 'CEO');
+INSERT INTO Employee (emp_id, emp_name, salary, designation) VALUES (103, 'Charlie Brown', 50000, 'Developer');
+INSERT INTO Employee (emp_id, emp_name, salary, designation) VALUES (104, 'David Lee', 45000, 'Analyst');
+
+COMMIT;
+------------------------------------------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE TRIGGER trg_salary_update
+AFTER UPDATE OF salary ON Employee
+FOR EACH ROW
+BEGIN
+    IF :OLD.salary != :NEW.salary THEN
+        INSERT INTO Salary_Backup (emp_id, old_salary, new_salary, salary_difference)
+        VALUES (:OLD.emp_id, :OLD.salary, :NEW.salary, :NEW.salary - :OLD.salary);
+    END IF;
+END;
+/
+-- Update salary for employee with emp_id = 101
+UPDATE Employee SET salary = 65000 WHERE emp_id = 101;
+
+-- Check the Salary_Backup table
+SELECT * FROM Salary_Backup;
+------------------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE TRIGGER trg_prevent_delete_ceo
+BEFORE DELETE ON Employee
+FOR EACH ROW
+BEGIN
+    IF :OLD.designation = 'CEO' THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Deletion of CEO records is not allowed.');
+    END IF;
+END;
+/
+
+-- Attempt to delete the CEO
+DELETE FROM Employee WHERE emp_id = 102;
+
+-- Attempt to delete a non-CEO
+DELETE FROM Employee WHERE emp_id = 103;

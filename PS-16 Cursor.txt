@@ -1,0 +1,105 @@
+-- Create Products table
+CREATE TABLE Products (
+    Product_id NUMBER PRIMARY KEY,
+    Product_Name VARCHAR2(50),
+    Product_Type VARCHAR2(30),
+    Price NUMBER(10, 2)
+);
+
+INSERT INTO Products (Product_id, Product_Name, Product_Type, Price) VALUES (1, 'T-Shirt', 'Apparel', 1200);
+INSERT INTO Products (Product_id, Product_Name, Product_Type, Price) VALUES (2, 'Jeans', 'Apparel', 3500);
+INSERT INTO Products (Product_id, Product_Name, Product_Type, Price) VALUES (3, 'Washing Machine', 'Electronics', 15000);
+INSERT INTO Products (Product_id, Product_Name, Product_Type, Price) VALUES (4, 'Sneakers', 'Apparel', 5500);
+INSERT INTO Products (Product_id, Product_Name, Product_Type, Price) VALUES (5, 'Laptop', 'Electronics', 70000);
+INSERT INTO Products (Product_id, Product_Name, Product_Type, Price) VALUES (6, 'Jacket', 'Apparel', 6000);
+
+COMMIT;
+
+--------------------------------------------------------------------------
+DECLARE
+    -- Declare a parameterized cursor
+    CURSOR product_cursor (min_price NUMBER, max_price NUMBER) IS
+        SELECT Product_id, Product_Name, Price 
+        FROM Products
+        WHERE Product_Type = 'Apparel' 
+          AND Price BETWEEN min_price AND max_price;
+    
+    v_product_id Products.Product_id%TYPE;
+    v_product_name Products.Product_Name%TYPE;
+    v_price Products.Price%TYPE;
+    v_min_price NUMBER;
+    v_max_price NUMBER;
+BEGIN
+    -- Get user inputs for minimum and maximum price
+    v_min_price := &Enter_Minimum_Price;
+    v_max_price := &Enter_Maximum_Price;
+
+    -- Open the parameterized cursor
+    OPEN product_cursor(v_min_price, v_max_price);
+    
+    -- Fetch and display records
+    LOOP
+        FETCH product_cursor INTO v_product_id, v_product_name, v_price;
+        EXIT WHEN product_cursor%NOTFOUND;
+        DBMS_OUTPUT.PUT_LINE('Product ID: ' || v_product_id || 
+                             ', Name: ' || v_product_name || 
+                             ', Price: ' || v_price);
+    END LOOP;
+
+    -- Close the cursor
+    CLOSE product_cursor;
+END;
+/
+--------------------------------------------------------------------------------------------------------------
+
+
+
+DECLARE
+    -- Declare an explicit cursor
+    CURSOR expensive_products IS
+        SELECT Product_id, Product_Name, Product_Type, Price
+        FROM Products
+        WHERE Price > 5000;
+    
+    v_product_id Products.Product_id%TYPE;
+    v_product_name Products.Product_Name%TYPE;
+    v_product_type Products.Product_Type%TYPE;
+    v_price Products.Price%TYPE;
+BEGIN
+    -- Open the cursor
+    OPEN expensive_products;
+
+    -- Loop through the cursor and fetch records
+    LOOP
+        FETCH expensive_products INTO v_product_id, v_product_name, v_product_type, v_price;
+        EXIT WHEN expensive_products%NOTFOUND;
+        DBMS_OUTPUT.PUT_LINE('Product ID: ' || v_product_id || 
+                             ', Name: ' || v_product_name || 
+                             ', Type: ' || v_product_type || 
+                             ', Price: ' || v_price);
+    END LOOP;
+
+    -- Close the cursor
+    CLOSE expensive_products;
+END;
+/
+
+----------------------------------------------------------------------------------------------------------------------
+
+
+DECLARE
+    v_rows_updated NUMBER;
+BEGIN
+    -- Update the prices and get the number of affected rows
+    UPDATE Products
+    SET Price = Price + 1000;
+    
+    -- Use SQL%ROWCOUNT to get the count of updated rows
+    v_rows_updated := SQL%ROWCOUNT;
+    
+    DBMS_OUTPUT.PUT_LINE('Number of products updated: ' || v_rows_updated);
+    
+    COMMIT;
+END;
+/
+

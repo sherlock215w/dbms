@@ -1,0 +1,77 @@
+-- Create Employee table
+CREATE TABLE Employee (
+    Emp_id NUMBER PRIMARY KEY,
+    Emp_Name VARCHAR2(50),
+    Salary NUMBER(10, 2)
+);
+INSERT INTO Employee (Emp_id, Emp_Name, Salary) VALUES (101, 'Alice Johnson', 60000);
+INSERT INTO Employee (Emp_id, Emp_Name, Salary) VALUES (102, 'Bob Smith', 45000);
+INSERT INTO Employee (Emp_id, Emp_Name, Salary) VALUES (103, 'Charlie Brown', 75000);
+INSERT INTO Employee (Emp_id, Emp_Name, Salary) VALUES (104, 'David Lee', 32000);
+INSERT INTO Employee (Emp_id, Emp_Name, Salary) VALUES (105, 'Eva Adams', 90000);
+
+COMMIT;
+
+
+----------------------------------------------------------------------------------------------------------------------
+
+
+DECLARE
+    -- Declare an explicit cursor
+    CURSOR emp_cursor IS
+        SELECT Emp_id, Emp_Name, Salary FROM Employee WHERE Salary > 50000;
+    v_emp_id Employee.Emp_id%TYPE;
+    v_emp_name Employee.Emp_Name%TYPE;
+    v_salary Employee.Salary%TYPE;
+BEGIN
+    -- Open the cursor
+    OPEN emp_cursor;
+    
+    -- Loop through the cursor and fetch records
+    LOOP
+        FETCH emp_cursor INTO v_emp_id, v_emp_name, v_salary;
+        EXIT WHEN emp_cursor%NOTFOUND;
+        DBMS_OUTPUT.PUT_LINE('Emp_id: ' || v_emp_id || 
+                             ', Name: ' || v_emp_name || 
+                             ', Salary: ' || v_salary);
+    END LOOP;
+    
+    -- Close the cursor
+    CLOSE emp_cursor;
+END;
+/
+------------------------------------------------------------------------------------------------------------------
+
+DECLARE
+    v_total_count NUMBER;
+BEGIN
+    -- Use an implicit cursor to get the count of records
+    SELECT COUNT(*) INTO v_total_count FROM Employee;
+    DBMS_OUTPUT.PUT_LINE('Total number of employees: ' || v_total_count);
+END;
+--------------------------------------------------------------------------------------------------------------------------
+DECLARE
+    -- Declare a parameterized cursor
+    CURSOR emp_salary_cursor (p_emp_id NUMBER) IS
+        SELECT Salary FROM Employee WHERE Emp_id = p_emp_id;
+    v_salary Employee.Salary%TYPE;
+    v_emp_id NUMBER;
+BEGIN
+    -- Get the employee ID from the user
+    v_emp_id := &Enter_Employee_ID;
+    
+    -- Open the cursor with the given employee ID
+    OPEN emp_salary_cursor(v_emp_id);
+    FETCH emp_salary_cursor INTO v_salary;
+    
+    -- Check if the record was found
+    IF emp_salary_cursor%FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('Salary of Employee with ID ' || v_emp_id || ' is: ' || v_salary);
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('No employee found with ID ' || v_emp_id);
+    END IF;
+
+    -- Close the cursor
+    CLOSE emp_salary_cursor;
+END;
+

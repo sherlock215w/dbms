@@ -1,0 +1,115 @@
+-- Create Account table
+CREATE TABLE Account (
+    Account_No NUMBER PRIMARY KEY,
+    Cust_Name VARCHAR2(50),
+    Balance NUMBER(10, 2),
+    NoOfYears NUMBER
+);
+
+-- Create Earned_Interest table
+CREATE TABLE Earned_Interest (
+    Account_No NUMBER,
+    Interest_Amt NUMBER(10, 2),
+    CONSTRAINT fk_account FOREIGN KEY (Account_No) REFERENCES Account(Account_No)
+);
+
+
+
+
+INSERT INTO Account (Account_No, Cust_Name, Balance, NoOfYears) 
+VALUES (101, 'Alice Johnson', 60000, 3);
+
+INSERT INTO Account (Account_No, Cust_Name, Balance, NoOfYears) 
+VALUES (102, 'Bob Smith', 45000, 2);
+
+INSERT INTO Account (Account_No, Cust_Name, Balance, NoOfYears) 
+VALUES (103, 'Charlie Brown', 75000, 4);
+
+INSERT INTO Account (Account_No, Cust_Name, Balance, NoOfYears) 
+VALUES (104, 'David Lee', 32000, 1);
+
+COMMIT;
+
+
+
+CREATE OR REPLACE PROCEDURE calculate_interest (
+    p_account_no IN NUMBER,
+    p_interest_rate IN NUMBER
+) IS
+    v_balance NUMBER;
+    v_years NUMBER;
+    v_interest_amt NUMBER;
+BEGIN
+    -- Fetch balance and years for the given account number
+    SELECT Balance, NoOfYears INTO v_balance, v_years
+    FROM Account
+    WHERE Account_No = p_account_no;
+
+    -- Calculate simple interest
+    v_interest_amt := v_balance * (p_interest_rate / 100) * v_years;
+
+    -- Insert the calculated interest into the Earned_Interest table
+    INSERT INTO Earned_Interest (Account_No, Interest_Amt)
+    VALUES (p_account_no, v_interest_amt);
+
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('Interest calculated and stored successfully.');
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('Account not found.');
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
+END;
+/
+
+
+
+BEGIN
+    calculate_interest(101, 5); -- Account_No: 101, Interest Rate: 5%
+END;
+/
+
+BEGIN
+    calculate_interest(103, 4); -- Account_No: 103, Interest Rate: 4%
+END;
+/
+
+-------------------------------------------------------------------------------------------------------------------------
+
+
+CREATE OR REPLACE FUNCTION get_high_balance_accounts 
+RETURN SYS_REFCURSOR IS
+    v_refcursor SYS_REFCURSOR;
+BEGIN
+    OPEN v_refcursor FOR
+    SELECT * FROM Account WHERE Balance > 50000;
+    RETURN v_refcursor;
+END;
+/
+
+
+
+
+
+set serveroutput on;
+DECLARE
+    v_cursor SYS_REFCURSOR;
+    v_account_no NUMBER;
+    v_cust_name VARCHAR2(50);
+    v_balance NUMBER;
+    v_years NUMBER;
+BEGIN
+    v_cursor := get_high_balance_accounts;
+
+    LOOP
+        FETCH v_cursor INTO v_account_no, v_cust_name, v_balance, v_years;
+        EXIT WHEN v_cursor%NOTFOUND;
+        DBMS_OUTPUT.PUT_LINE('Account No: ' || v_account_no || 
+                             ', Name: ' || v_cust_name || 
+                             ', Balance: ' || v_balance || 
+                             ', Years: ' || v_years);
+    END LOOP;
+
+    CLOSE v_cursor;
+END;
+/
