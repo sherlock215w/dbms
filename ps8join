@@ -1,0 +1,114 @@
+CREATE TABLE Employee (
+    Employee_id NUMBER PRIMARY KEY,                -- Primary key for employee id
+    First_name VARCHAR2(50),                        -- Employee first name
+    Last_name VARCHAR2(50),                         -- Employee last name
+    Hire_date DATE,                                 -- Hire date of employee
+    Salary NUMBER,                                  -- Employee salary
+    Job_title VARCHAR2(50),                         -- Employee job title
+    Manager_id NUMBER,                              -- Manager's Employee ID (foreign key)
+    Department_id NUMBER,                           -- Department ID the employee belongs to (foreign key)
+    CONSTRAINT fk_manager FOREIGN KEY (Manager_id) REFERENCES Employee(Employee_id), -- Manager is another employee
+    CONSTRAINT fk_department FOREIGN KEY (Department_id) REFERENCES Departments(Department_id) -- Department of the employee
+);
+
+-- Create Departments table
+CREATE TABLE Departments (
+    Department_id NUMBER PRIMARY KEY,               -- Primary key for department id
+    Department_name VARCHAR2(50),                    -- Name of the department
+    Manager_id NUMBER,                               -- Manager for the department (foreign key)
+    Location_id NUMBER,                              -- Location ID of the department (foreign key)
+    CONSTRAINT fk_manager_dept FOREIGN KEY (Manager_id) REFERENCES Manager(Manager_id), -- Department manager (references Manager table)
+    CONSTRAINT fk_location FOREIGN KEY (Location_id) REFERENCES Locations(location_id) -- Department location (references Locations table)
+);
+
+-- Create Locations table
+CREATE TABLE Locations (
+    Location_id NUMBER PRIMARY KEY,                  -- Primary key for location id
+    Street_address VARCHAR2(100),                    -- Street address of the location
+    Postal_code VARCHAR2(20),                        -- Postal code of the location
+    City VARCHAR2(50),                               -- City of the location
+    State VARCHAR2(50),                              -- State of the location
+    Country_id VARCHAR2(20)                          -- Country ID where the location is based
+);
+
+-- Create Manager table
+CREATE TABLE Manager (
+    Manager_id NUMBER PRIMARY KEY,                   -- Primary key for manager id
+    Manager_name VARCHAR2(50)                        -- Name of the manager
+);
+
+-- Step 2: Insert Sample Data into the Tables
+
+-- Insert data into the Manager table
+INSERT INTO Manager VALUES (1, 'John Doe');
+INSERT INTO Manager VALUES (2, 'Jane Smith');
+INSERT INTO Manager VALUES (3, 'Alice Brown');
+COMMIT;
+-- Insert data into the Locations table
+INSERT INTO Locations VALUES (1, '123 Main St', '12345', 'New York', 'NY', 'US');
+INSERT INTO Locations VALUES (2, '456 Oak St', '67890', 'Los Angeles', 'CA', 'US');
+INSERT INTO Locations VALUES (3, '789 Pine St', '11223', 'London', 'England', 'UK');
+COMMIT;
+
+-- Insert data into the Departments table
+INSERT INTO Departments VALUES (101, 'HR', 1, 1);  -- HR department, managed by John Doe, located in New York
+INSERT INTO Departments VALUES (102, 'IT', 2, 2);  -- IT department, managed by Jane Smith, located in Los Angeles
+INSERT INTO Departments VALUES (103, 'Finance', 3, 3);  -- Finance department, managed by Alice Brown, located in London
+COMMIT;
+-- Insert data into the Employee table
+INSERT INTO Employee VALUES (1, 'Steve', 'Johnson', TO_DATE('2020-01-15', 'YYYY-MM-DD'), 60000, 'HR Specialist', NULL, 101); -- Steve has no manager, belongs to HR
+INSERT INTO Employee VALUES (2, 'Emily', 'Davis', TO_DATE('2019-03-11', 'YYYY-MM-DD'), 75000, 'IT Manager', 1, 102); -- Emily is managed by Steve, works in IT
+INSERT INTO Employee VALUES (3, 'Michael', 'Lee', TO_DATE('2018-05-19', 'YYYY-MM-DD'), 70000, 'Finance Analyst', 2, 103); -- Michael is managed by Emily, works in Finance
+INSERT INTO Employee VALUES (4, 'Jessica', 'Martinez', TO_DATE('2022-07-30', 'YYYY-MM-DD'), 80000, 'IT Specialist', 2, 102); -- Jessica is managed by Emily, works in IT
+INSERT INTO Employee VALUES (5, 'David', 'Singh', TO_DATE('2021-09-09', 'YYYY-MM-DD'), 65000, 'HR Assistant', 1, 101); -- David is managed by Steve, works in HR
+
+-- Commit to make the changes permanent
+COMMIT;
+
+-- Step 3: Solve the queries using joins and subqueries
+
+-- 1. Query to find the names (first_name, last_name) and the salaries of the employees 
+-- who have a higher salary than the employee whose last_name = 'Singh'.
+SELECT e.first_name, e.last_name, e.salary
+FROM Employee e
+WHERE e.salary > (
+    -- Subquery to find the salary of the employee with last_name 'Singh'
+    SELECT salary
+    FROM Employee
+    WHERE last_name = 'Singh'
+);
+
+-- 2. Query to find the names (first_name, last_name) of the employees who have a manager and 
+-- work for a department based in the United States.
+SELECT e.first_name, e.last_name
+FROM Employee e
+JOIN Departments d ON e.department_id = d.department_id
+JOIN Locations l ON d.location_id = l.location_id
+WHERE e.manager_id IS NOT NULL  -- Employees with managers
+AND l.country_id = 'US';        -- Employees who work in the US
+
+-- 3. Query to find the names (first_name, last_name), the salary of the employees whose salary is 
+-- greater than the average salary of all employees.
+SELECT e.first_name, e.last_name, e.salary
+FROM Employee e
+WHERE e.salary > (
+    -- Subquery to find the average salary of all employees
+    SELECT AVG(salary)
+    FROM Employee
+);
+
+-- 4. Query to find the employee id, name (last_name) along with their manager_id, manager name (last_name).
+SELECT e.Employee_id, e.last_name AS Employee_last_name, e.manager_id, m.last_name AS Manager_last_name
+FROM Employee e
+-- Join the Employee table again to get the manager details from the same Employee table
+LEFT JOIN Employee m ON e.manager_id = m.Employee_id;
+
+-- 5. Query to find the names and hire date of the employees who were hired after the employee whose last_name = 'Jones'.
+SELECT e.first_name, e.last_name, e.hire_date
+FROM Employee e
+WHERE e.hire_date > (
+    -- Subquery to find the hire date of the employee with last_name 'Jones'
+    SELECT hire_date
+    FROM Employee
+    WHERE last_name = 'Jones'
+);
