@@ -1,0 +1,113 @@
+CREATE TABLE Customer (
+    CustID NUMBER PRIMARY KEY,
+    Name VARCHAR2(50),
+    Cust_Address VARCHAR2(100),
+    Phone_no VARCHAR2(15),
+    Email_ID VARCHAR2(50),
+    Age NUMBER
+);
+CREATE TABLE Branch (
+    BranchID NUMBER PRIMARY KEY,
+    Branch_Name VARCHAR2(50),
+    Address VARCHAR2(100)
+);
+CREATE TABLE Account (
+    Account_no NUMBER PRIMARY KEY,
+    BranchID NUMBER,
+    CustID NUMBER,
+    Open_date DATE,
+    Account_type VARCHAR2(20),
+    Balance NUMBER,
+    FOREIGN KEY (BranchID) REFERENCES Branch(BranchID),
+    FOREIGN KEY (CustID) REFERENCES Customer(CustID)
+);
+-- Insert data into Customer table
+INSERT INTO Customer VALUES (101, 'John Doe', 'Mumbai', '9876543210', 'john@example.com', 32);
+INSERT INTO Customer VALUES (102, 'Jane Smith', 'Delhi', '9123456789', 'jane@example.com', 28);
+INSERT INTO Customer VALUES (103, 'Alice Brown', 'Chennai', '9876543211', 'alice@example.com', 45);
+INSERT INTO Customer VALUES (104, 'Bob Green', 'Kolkata', '9876543212', 'bob@example.com', 36);
+
+-- Insert data into Branch table
+INSERT INTO Branch VALUES (1, 'Main Branch', 'Mumbai');
+INSERT INTO Branch VALUES (2, 'East Branch', 'Delhi');
+INSERT INTO Branch VALUES (3, 'West Branch', 'Chennai');
+
+-- Insert data into Account table
+INSERT INTO Account VALUES (1001, 1, 101, TO_DATE('16-08-2018', 'DD-MM-YYYY'), 'Savings', 15000);
+INSERT INTO Account VALUES (1002, 2, 102, TO_DATE('16-02-2018', 'DD-MM-YYYY'), 'Loan', 250000);
+INSERT INTO Account VALUES (1003, 3, 103, TO_DATE('16-08-2018', 'DD-MM-YYYY'), 'Savings', 20000);
+INSERT INTO Account VALUES (1004, 1, 104, TO_DATE('16-02-2018', 'DD-MM-YYYY'), 'Loan', 100000);
+COMMIT;
+
+-----------------------------------------------------------------------
+CREATE OR REPLACE VIEW Savings_Account_View AS
+SELECT 
+    c.CustID, 
+    c.Name, 
+    c.Cust_Address, 
+    c.Phone_no, 
+    c.Email_ID, 
+    c.Age
+FROM Customer c
+JOIN Account a ON c.CustID = a.CustID
+WHERE a.Account_type = 'Savings' 
+AND a.Open_date = TO_DATE('16-08-2018', 'DD-MM-YYYY');
+
+----------------------------------------------------------------------------------------
+UPDATE Customer
+SET Cust_Address = 'Pune'
+WHERE CustID = 103;
+COMMIT;
+-------------------------------------------------------------------------------
+
+
+CREATE OR REPLACE VIEW Loan_Account_View AS
+SELECT 
+    c.CustID, 
+    c.Name, 
+    c.Cust_Address, 
+    c.Phone_no, 
+    c.Email_ID, 
+    c.Age
+FROM Customer c
+JOIN Account a ON c.CustID = a.CustID
+WHERE a.Account_type = 'Loan' 
+AND a.Open_date = TO_DATE('16-02-2018', 'DD-MM-YYYY');
+-----------------------------------------------------------------------------------
+
+
+CREATE INDEX idx_customer_id ON Customer(CustID);
+CREATE INDEX idx_branch_id ON Branch(BranchID);
+------------------------------------------------------------------------
+
+
+CREATE SEQUENCE customer_seq
+START WITH 105
+INCREMENT BY 1;
+-------------------------------------------------------------------------------
+
+
+INSERT INTO Customer (CustID, Name, Cust_Address, Phone_no, Email_ID, Age)
+VALUES (customer_seq.NEXTVAL, 'Charlie Black', 'Hyderabad', '9876543213', 'charlie@example.com', 40);
+
+-------------------------------------------------------------------------------
+
+
+CREATE SYNONYM Cust_info FOR Branch;
+-------------------------------------------------------------------------------
+
+--verify all data
+-- Verify Customers
+SELECT * FROM Customer;
+
+-- Verify Branches
+SELECT * FROM Branch;
+
+-- Verify Accounts
+SELECT * FROM Account;
+
+-- View Savings Accounts
+SELECT * FROM Savings_Account_View;
+
+-- View Loan Accounts
+SELECT * FROM Loan_Account_View;
