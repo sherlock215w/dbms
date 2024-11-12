@@ -1,0 +1,66 @@
+// Step 1: Create and insert data into the Student collection
+db.Student.insertMany([
+    { roll_no: "A101", name: "Alice", class: "TE", dept: "CS", aggregate_marks: 85 },
+    { roll_no: "A102", name: "Bob", class: "TE", dept: "IT", aggregate_marks: 90 },
+    { roll_no: "A103", name: "Charlie", class: "SE", dept: "CS", aggregate_marks: 70 },
+    { roll_no: "A104", name: "David", class: "SE", dept: "IT", aggregate_marks: 75 },
+    { roll_no: "A105", name: "Eva", class: "BE", dept: "CS", aggregate_marks: 88 },
+    { roll_no: "A106", name: "Frank", class: "BE", dept: "IT", aggregate_marks: 92 },
+    { roll_no: "A107", name: "Grace", class: "TE", dept: "CS", aggregate_marks: 78 },
+    { roll_no: "A108", name: "Hank", class: "TE", dept: "IT", aggregate_marks: 85 },
+    { roll_no: "A109", name: "Ivy", class: "SE", dept: "CS", aggregate_marks: 68 },
+    { roll_no: "A110", name: "Jack", class: "SE", dept: "IT", aggregate_marks: 82 }
+]);
+
+// Step 2: MapReduce functions for each requirement
+
+// Query 1: Total marks of students in "TE" class department-wise
+db.Student.mapReduce(
+    function() {
+        if (this.class === "TE") {
+            emit(this.dept, this.aggregate_marks);  // Emit dept as key and aggregate_marks as value
+        }
+    },
+    function(key, values) {
+        return Array.sum(values);  // Sum the marks of all students in the same department
+    },
+    {
+        out: { inline: 1 }  // Output the result directly to the console
+    }
+);
+
+// Query 2: Highest marks of students in "SE" class department-wise
+db.Student.mapReduce(
+    function() {
+        if (this.class === "SE") {
+            emit(this.dept, this.aggregate_marks);  // Emit dept as key and aggregate_marks as value
+        }
+    },
+    function(key, values) {
+        return Math.max.apply(null, values);  // Get the highest marks for each department
+    },
+    {
+        out: { inline: 1 }  // Output the result directly to the console
+    }
+);
+
+// Query 3: Average marks of students in "BE" class department-wise
+db.Student.mapReduce(
+    function() {
+        if (this.class === "BE") {
+            emit(this.dept, { totalMarks: this.aggregate_marks, count: 1 });  // Emit total marks and count as a value
+        }
+    },
+    function(key, values) {
+        var result = { totalMarks: 0, count: 0 };
+        values.forEach(function(value) {
+            result.totalMarks += value.totalMarks;  // Sum the total marks
+            result.count += value.count;  // Count the number of students
+        });
+        result.averageMarks = result.totalMarks / result.count;  // Calculate average
+        return result;
+    },
+    {
+        out: { inline: 1 }  // Output the result directly to the console
+    }
+);
