@@ -1,0 +1,45 @@
+// Step 1: Create the Book collection and insert sample data
+db.Book.insertMany([
+    { Title: "Book A", Author_name: "Author 1", Borrowed_status: true, Price: 350 },
+    { Title: "Book B", Author_name: "Author 1", Borrowed_status: false, Price: 250 },
+    { Title: "Book C", Author_name: "Author 2", Borrowed_status: true, Price: 400 },
+    { Title: "Book D", Author_name: "Author 2", Borrowed_status: true, Price: 150 },
+    { Title: "Book E", Author_name: "Author 3", Borrowed_status: false, Price: 500 },
+    { Title: "Book F", Author_name: "Author 3", Borrowed_status: true, Price: 320 },
+    { Title: "Book G", Author_name: "Author 1", Borrowed_status: true, Price: 280 }
+]);
+
+// Query 1: Display Author-wise list of books
+db.Book.mapReduce(
+    function () { emit(this.Author_name, this.Title); },  // Map: Emits each book's title with the author's name as key
+    function (key, values) { return values; },            // Reduce: Combines all book titles for each author
+    {
+        out: { inline: 1 }                                // Output the result directly to the console
+    }
+);
+
+// Query 2: Display Author-wise list of books having Borrowed_status as “True”
+db.Book.mapReduce(
+    function () {
+        if (this.Borrowed_status === true) {              // Map: Check if Borrowed_status is true
+            emit(this.Author_name, this.Title);           // Emit title with author's name as key
+        }
+    },
+    function (key, values) { return values; },            // Reduce: Combines borrowed book titles for each author
+    {
+        out: { inline: 1 }                                // Output the result directly to the console
+    }
+);
+
+// Query 3: Display Author-wise list of books having Price greater than 300
+db.Book.mapReduce(
+    function () {
+        if (this.Price > 300) {                           // Map: Check if Price is greater than 300
+            emit(this.Author_name, this.Title);           // Emit title with author's name as key
+        }
+    },
+    function (key, values) { return values; },            // Reduce: Combines titles of books with price > 300 for each author
+    {
+        out: { inline: 1 }                                // Output the result directly to the console
+    }
+);
