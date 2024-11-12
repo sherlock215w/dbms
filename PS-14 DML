@@ -1,0 +1,87 @@
+-- Step 1: Create the tables with referential integrity
+
+-- Create Customer table
+CREATE TABLE Customer (
+    CustID INT PRIMARY KEY,
+    Name VARCHAR(100),
+    Cust_Address VARCHAR(200),
+    Phone_no VARCHAR(15),
+    Email_ID VARCHAR(100),
+    Age INT
+);
+
+-- Create Branch table
+CREATE TABLE Branch (
+    Branch_ID INT PRIMARY KEY,
+    Branch_Name VARCHAR(100),
+    Address VARCHAR(200)
+);
+
+-- Create Account table with foreign keys referencing Customer and Branch tables
+CREATE TABLE Account (
+    Account_no INT PRIMARY KEY,
+    Branch_ID INT,
+    CustID INT,
+    date_open DATE,
+    Account_type VARCHAR(50),
+    Balance DECIMAL(10, 2),
+    CONSTRAINT fk_branch FOREIGN KEY (Branch_ID) REFERENCES Branch(Branch_ID),
+    CONSTRAINT fk_customer FOREIGN KEY (CustID) REFERENCES Customer(CustID)
+);
+
+-- Step 2: Insert sample data into Customer table
+INSERT INTO Customer (CustID, Name, Cust_Address, Phone_no, Email_ID, Age)
+VALUES
+    (1, 'Alice', '123 Elm Street, Pune', '123-456-7890', 'alice@email.com', 30),
+    (2, 'Bob', '456 Oak Avenue, Mumbai', '234-567-8901', 'bob@email.com', 45),
+    (3, 'Charlie', '789 Pine Road, Pune', '345-678-9012', 'charlie@email.com', 35),
+    (4, 'David', '101 Maple Blvd, Bangalore', '456-789-0123', 'david@email.com', 50);
+
+-- Step 3: Insert sample data into Branch table
+INSERT INTO Branch (Branch_ID, Branch_Name, Address)
+VALUES
+    (1, 'Downtown Branch', '123 Main St, Downtown City'),
+    (2, 'Uptown Branch', '456 High St, Uptown City');
+
+-- Step 4: Insert sample data into Account table
+INSERT INTO Account (Account_no, Branch_ID, CustID, date_open, Account_type, Balance)
+VALUES
+    (1001, 1, 1, '2015-06-01', 'Saving Account', 50000.00),
+    (1002, 1, 2, '2016-08-15', 'Checking', 1500.00),
+    (1003, 2, 3, '2017-02-10', 'Saving Account', 10000.00),
+    (1004, 2, 4, '2018-05-20', 'Saving Account', 30000.00);
+
+-- Step 5: Modify the size of column "Email_ID" to 20 in Customer table
+ALTER TABLE Customer MODIFY Email_ID VARCHAR(20);
+
+-- Step 6: Change the column "Email_ID" to NOT NULL in Customer table
+ALTER TABLE Customer MODIFY Email_ID VARCHAR(20) NOT NULL;
+
+-- Step 7: Display the total customers with balance > 50,000 Rs
+SELECT COUNT(DISTINCT c.CustID) AS Total_Customers
+FROM Customer c
+JOIN Account a ON c.CustID = a.CustID
+WHERE a.Balance > 50000;
+
+-- Step 8: Display the average balance for account type "Saving Account"
+SELECT AVG(a.Balance) AS Average_Balance
+FROM Account a
+WHERE a.Account_type = 'Saving Account';
+
+-- Step 9: Display the customer details that live in Pune or have name starting with 'A'
+SELECT c.CustID, c.Name, c.Cust_Address, c.Phone_no, c.Email_ID, c.Age
+FROM Customer c
+WHERE c.Cust_Address LIKE '%Pune%' OR c.Name LIKE 'A%';
+
+-- Step 10: Create a new table Saving_Account based on Account table (with only Saving Account type)
+CREATE TABLE Saving_Account AS
+SELECT Account_no, Branch_ID, CustID, date_open, Balance
+FROM Account
+WHERE Account_type = 'Saving Account';
+
+-- Step 11: Display the customer details age-wise with balance >= 20,000 Rs
+SELECT c.Name, c.Age, a.Balance
+FROM Customer c
+JOIN Account a ON c.CustID = a.CustID
+WHERE a.Balance >= 20000
+ORDER BY c.Age;
