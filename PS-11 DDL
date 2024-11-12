@@ -1,0 +1,89 @@
+-- Step 1: Create the tables with referential integrity
+
+-- Create Customer table
+CREATE TABLE Customer (
+    CustID INT PRIMARY KEY,
+    Name VARCHAR(100),
+    Cust_Address VARCHAR(200),
+    Phone_no VARCHAR(15),
+    Email_ID VARCHAR(100),
+    Age INT
+);
+
+-- Create Branch table
+CREATE TABLE Branch (
+    Branch_ID INT PRIMARY KEY,
+    Branch_Name VARCHAR(100),
+    Address VARCHAR(200)
+);
+
+-- Create Account table with foreign keys referencing Customer and Branch tables
+CREATE TABLE Account (
+    Account_no INT PRIMARY KEY,
+    Branch_ID INT,
+    CustID INT,
+    date_open DATE,
+    Account_type VARCHAR(50),
+    Balance DECIMAL(10, 2),
+    CONSTRAINT fk_branch FOREIGN KEY (Branch_ID) REFERENCES Branch(Branch_ID),
+    CONSTRAINT fk_customer FOREIGN KEY (CustID) REFERENCES Customer(CustID)
+);
+
+-- Step 2: Draw the ER Diagram
+-- (An ER diagram is typically drawn in an ER diagram tool, but it would include:
+--   - `Customer` has a one-to-many relationship with `Account` via `CustID`.
+--   - `Branch` has a one-to-many relationship with `Account` via `Branch_ID`.
+-- )
+
+-- Step 3: Insert sample data into Customer table
+INSERT INTO Customer (CustID, Name, Cust_Address, Phone_no, Email_ID, Age)
+VALUES
+    (1, 'Alice', '123 Elm Street, City', '123-456-7890', 'alice@email.com', 30),
+    (2, 'Bob', '456 Oak Avenue, City', '234-567-8901', 'bob@email.com', 45),
+    (3, 'Charlie', '789 Pine Road, City', '345-678-9012', 'charlie@email.com', 35),
+    (4, 'David', '101 Maple Blvd, City', '456-789-0123', 'david@email.com', 50);
+
+-- Step 4: Insert sample data into Branch table
+INSERT INTO Branch (Branch_ID, Branch_Name, Address)
+VALUES
+    (1, 'Downtown Branch', '123 Main St, Downtown City'),
+    (2, 'Uptown Branch', '456 High St, Uptown City');
+
+-- Step 5: Insert sample data into Account table
+INSERT INTO Account (Account_no, Branch_ID, CustID, date_open, Account_type, Balance)
+VALUES
+    (1001, 1, 1, '2015-06-01', 'Savings', 5000.00),
+    (1002, 1, 2, '2016-08-15', 'Checking', 1500.00),
+    (1003, 2, 3, '2017-02-10', 'Business', 10000.00),
+    (1004, 2, 4, '2018-05-20', 'Savings', 3000.00);
+
+-- Step 6: Create an index on primary key column of the Account table
+CREATE INDEX idx_account_no ON Account(Account_no);
+
+-- Step 7: Create a View as Customer_Info for customers under age 45
+CREATE VIEW Customer_Info AS
+SELECT CustID, Name, Cust_Address, Phone_no, Email_ID, Age
+FROM Customer
+WHERE Age < 45;
+
+-- Step 8: Update the view with an open date of '16/4/2017' (Note: View cannot directly be updated; however, we can update the underlying table)
+-- Since views are derived from tables, we update the Account table directly for accounts associated with the customers in the view
+UPDATE Account
+SET date_open = TO_DATE('2017-04-16', 'YYYY-MM-DD')
+WHERE CustID IN (SELECT CustID FROM Customer_Info);
+
+-- Step 9: Create a sequence on Branch table
+CREATE SEQUENCE Branch_Seq
+START WITH 1
+INCREMENT BY 1
+MINVALUE 1
+NOCYCLE;
+
+-- Step 10: Create a synonym 'Branch_info' for Branch table
+CREATE SYNONYM Branch_info FOR Branch;
+
+-- Step 11: Verify the insertion and created objects
+SELECT * FROM Customer;
+SELECT * FROM Branch;
+SELECT * FROM Account;
+SELECT * FROM Customer_Info;
