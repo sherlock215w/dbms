@@ -1,0 +1,93 @@
+-- Step 1: Create tables with referential integrity
+
+-- Create Locations Table
+CREATE TABLE Locations (
+    Location_id INT PRIMARY KEY,
+    Street_address VARCHAR(255),
+    Postal_code VARCHAR(20),
+    City VARCHAR(100),
+    State VARCHAR(100),
+    Country_id INT
+);
+
+-- Create Manager Table
+CREATE TABLE Manager (
+    Manager_id INT PRIMARY KEY,
+    Manager_name VARCHAR(100)
+);
+
+-- Create Departments Table
+CREATE TABLE Departments (
+    Department_id INT PRIMARY KEY,
+    Department_name VARCHAR(100),
+    Manager_id INT,
+    Location_id INT,
+    CONSTRAINT fk_manager FOREIGN KEY (Manager_id) REFERENCES Manager(Manager_id),
+    CONSTRAINT fk_location FOREIGN KEY (Location_id) REFERENCES Locations(Location_id)
+);
+
+-- Create Employee Table
+CREATE TABLE Employee (
+    Employee_id INT PRIMARY KEY,
+    First_name VARCHAR(100),
+    Last_name VARCHAR(100),
+    Hire_date DATE,
+    Salary DECIMAL(10, 2),
+    Job_title VARCHAR(100),
+    Manager_id INT,
+    Department_id INT,
+    CONSTRAINT fk_department FOREIGN KEY (Department_id) REFERENCES Departments(Department_id),
+    CONSTRAINT fk_employee_manager FOREIGN KEY (Manager_id) REFERENCES Manager(Manager_id)
+);
+
+-- Step 2: Queries to solve the requirements
+
+-- 1. Find the names (first_name, last_name), and salary of employees who earn more than the average salary 
+--    and work in any IT department.
+SELECT e.First_name, e.Last_name, e.Salary
+FROM Employee e
+JOIN Departments d ON e.Department_id = d.Department_id
+WHERE e.Salary > (SELECT AVG(Salary) FROM Employee)
+  AND d.Department_name = 'IT';
+
+-- Explanation: This query joins the Employee and Departments tables and filters employees 
+-- whose salary is greater than the average salary of all employees and who work in the 'IT' department.
+
+-- 2. Find the names (first_name, last_name), and salary of employees who earn the same salary as 
+--    the minimum salary for all departments.
+SELECT e.First_name, e.Last_name, e.Salary
+FROM Employee e
+WHERE e.Salary = (SELECT MIN(Salary) FROM Employee);
+
+-- Explanation: This query selects employees whose salary is equal to the minimum salary among all employees.
+
+-- 3. Display the employee ID, first name, last name, and salary of all employees whose salary is above 
+--    average for their departments.
+SELECT e.Employee_id, e.First_name, e.Last_name, e.Salary
+FROM Employee e
+WHERE e.Salary > (
+    SELECT AVG(Salary)
+    FROM Employee
+    WHERE Department_id = e.Department_id
+);
+
+-- Explanation: This query finds employees whose salary is above the average salary for their respective departments. 
+-- It compares the employee's salary to the average salary of their department using a subquery.
+
+-- 4. Display the department name, manager name, and city.
+SELECT d.Department_name, m.Manager_name, l.City
+FROM Departments d
+JOIN Manager m ON d.Manager_id = m.Manager_id
+JOIN Locations l ON d.Location_id = l.Location_id;
+
+-- Explanation: This query joins the Departments, Manager, and Locations tables to display the department's name, 
+-- the manager's name, and the city where the department is located.
+
+-- 5. Display the name (first_name, last_name), hire date, and salary of all managers whose experience is more than 15 years.
+SELECT e.First_name, e.Last_name, e.Hire_date, e.Salary
+FROM Employee e
+WHERE e.Manager_id IS NOT NULL
+  AND e.Hire_date <= CURRENT_DATE - INTERVAL 15 YEAR;
+
+-- Explanation: This query selects managers (identified by having a non-null Manager_id) whose hire date indicates they have 
+-- more than 15 years of experience. The `CURRENT_DATE - INTERVAL 15 YEAR` checks for employees hired before that date.
