@@ -1,0 +1,39 @@
+// Step 1: Create the collection and insert 10 documents
+db.Student.insertMany([
+    { Roll_No: "A01", Name: "Alice", Class: "FE", Marks: 60, Address: "Address 1", Enrolled_Courses: ["DBMS", "Maths"] },
+    { Roll_No: "A02", Name: "Bob", Class: "SE", Marks: 45, Address: "Address 2", Enrolled_Courses: ["TOC", "Physics"] },
+    { Roll_No: "A03", Name: "Charlie", Class: "TE", Marks: 70, Address: "Address 3", Enrolled_Courses: ["DBMS", "TOC"] },
+    { Roll_No: "A04", Name: "David", Class: "BE", Marks: 85, Address: "Address 4", Enrolled_Courses: ["Chemistry", "DBMS"] },
+    { Roll_No: "A05", Name: "Emma", Class: "FE", Marks: 40, Address: "Address 5", Enrolled_Courses: ["DBMS", "Maths", "TOC"] },
+    { Roll_No: "A06", Name: "Frank", Class: "TE", Marks: 55, Address: "Address 6", Enrolled_Courses: ["Maths", "Physics"] },
+    { Roll_No: "A07", Name: "Grace", Class: "SE", Marks: 65, Address: "Address 7", Enrolled_Courses: ["TOC", "Maths"] },
+    { Roll_No: "A08", Name: "Henry", Class: "BE", Marks: 95, Address: "Address 8", Enrolled_Courses: ["DBMS", "TOC"] },
+    { Roll_No: "A09", Name: "Ivy", Class: "TE", Marks: 30, Address: "Address 9", Enrolled_Courses: ["Physics", "Maths"] },
+    { Roll_No: "A10", Name: "Jake", Class: "SE", Marks: 20, Address: "Address 10", Enrolled_Courses: ["DBMS", "TOC", "Physics"] }
+]);
+
+// Query 1: List the names of students who have enrolled in both “DBMS” and “TOC”
+db.Student.find({ Enrolled_Courses: { $all: ["DBMS", "TOC"] } }, { Name: 1, _id: 0 });
+
+// Query 2: List the Roll numbers and class of students who have marks more than 50 or class as TE
+db.Student.find({ $or: [{ Marks: { $gt: 50 } }, { Class: "TE" }] }, { Roll_No: 1, Class: 1, _id: 0 });
+
+// Query 3: Update the entire record of the student with Roll_No "A10"
+db.Student.updateOne(
+    { Roll_No: "A10" },
+    {
+        $set: {
+            Name: "Jake Updated", Class: "SE Updated", Marks: 75, Address: "New Address 10",
+            Enrolled_Courses: ["DBMS", "Physics", "Maths"]
+        }
+    }
+);
+
+// Query 4: Display the names of students having the 3rd and 4th highest marks
+db.Student.find({}, { Name: 1, Marks: 1, _id: 0 }).sort({ Marks: -1 }).skip(2).limit(2);
+
+// Query 5: Delete the records of students having marks less than 20
+db.Student.deleteMany({ Marks: { $lt: 20 } });
+
+// Query 6: Delete only the first record from the collection
+db.Student.deleteOne({});
